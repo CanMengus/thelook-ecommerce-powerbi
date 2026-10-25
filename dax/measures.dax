@@ -1,0 +1,49 @@
+// ============================================================
+// The Look E-commerce – DAX measures used in the Power BI report
+// ============================================================
+
+// ---------- Sales & product performance (table: order_items) ----------
+
+Total Revenue =
+SUM ( order_items[sale_price] )
+
+Total Cost =
+SUMX ( order_items, RELATED ( products[cost] ) )
+
+Margin =
+[Total Revenue] - [Total Cost]
+
+// ---------- Report measures (table: _Measures) ----------
+
+Total Margin =
+[Total Revenue] - [Total Cost]
+
+Avg Margin % =
+DIVIDE ( [Total Margin], [Total Revenue] )
+
+// Share of order items with status "Returned"
+Return Rate =
+DIVIDE (
+    CALCULATE ( COUNTROWS ( order_items ), order_items[status] = "Returned" ),
+    COUNTROWS ( order_items )
+)
+
+// ---------- Customer measures (table: _Measures) ----------
+
+Total Customers =
+DISTINCTCOUNT ( users[id] )
+
+Avg Spend =
+AVERAGE ( users[Total Spend] )
+
+Avg Orders =
+AVERAGE ( users[Order Count] )
+
+Avg Recency =
+FORMAT ( AVERAGE ( users[Recency Days] ), "0" ) & " Days"
+
+Champions % =
+DIVIDE (
+    CALCULATE ( COUNTROWS ( users ), users[RFM Segment] = "Champions" ),
+    COUNTROWS ( users )
+)

@@ -1,0 +1,78 @@
+// ============================================================
+// The Look E-commerce – RFM calculated columns (table: users)
+// One row per user; scores are based on fixed thresholds
+// ============================================================
+
+// ---------- Customer behaviour ----------
+
+Last Order Date =
+CALCULATE ( MAX ( orders[created_at] ) )
+
+Order Count =
+CALCULATE ( DISTINCTCOUNT ( orders[order_id] ) )
+
+Total Spend =
+CALCULATE ( SUM ( order_items[sale_price] ) )
+
+// Days between the customer's last order and the latest order in the dataset
+Recency Days =
+DATEDIFF ( users[Last Order Date], MAXX ( ALL ( orders ), orders[created_at] ), DAY )
+
+// ---------- RFM scores (1 = worst, 5 = best) ----------
+
+// Fixed recency thresholds instead of RANKX, to avoid ties between customers
+R Score =
+VAR CurrentRecency = users[Recency Days]
+RETURN
+    IF (
+        ISBLANK ( CurrentRecency ),
+        1,
+        SWITCH (
+            TRUE (),
+            CurrentRecency <= 30, 5,
+            CurrentRecency <= 60, 4,
+            CurrentRecency <= 90, 3,
+            CurrentRecency <= 180, 2,
+            1
+        )
+    )
+
+F Score =
+VAR CurrentOrders = users[Order Count]
+RETURN
+    SWITCH (
+        TRUE (),
+        CurrentOrders >= 5, 5,
+        CurrentOrders = 4, 4,
+        CurrentOrders = 3, 3,
+        CurrentOrders = 2, 2,
+        1
+    )
+
+// Spend quintile (1 = top 20% of spenders)
+M Score =
+CEILING ( RANKX ( ALL ( users ), users[Total Spend], , DESC ) / ( COUNTROWS ( ALL ( users ) ) / 5 ), 1 )
+
+// ---------- Segments ----------
+
+RFM Segment =
+SWITCH (
+    TRUE (),
+    users[R Score] >= 4 && users[F Score] >= 4, "Champions",
+    users[R Score] >= 3 && users[F Score] >= 3, "Loyal",
+    users[R Score] >= 4 && users[F Score] <= 2, "New",
+    users[R Score] <= 2 && users[F Score] >= 3, "At risk",
+    users[R Score] <= 2 && users[F Score] <= 2, "Hibernating",
+    "Other"
+)
+
+Age Group =
+SWITCH (
+    TRUE (),
+    users[age] < 25, "18-24",
+    users[age] < 35, "25-34",
+    users[age] < 45, "35-44",
+    users[age] < 55, "45-54",
+    users[age] < 65, "55-64",
+    "65+"
+)
