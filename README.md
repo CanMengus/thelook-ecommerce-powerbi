@@ -1,4 +1,4 @@
-# The Look E-commerce - Product Performance & Customer Analysis (Power BI)
+# The Look E-commerce - Product Performance & Customer Segmentation (Power BI)
 
 **Which products drive the business, and which customers should the company focus on to grow?**
 
